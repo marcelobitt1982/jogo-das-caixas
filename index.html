@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYBER-SOKOBAN 2077 — 16-BIT EDITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #030712;
+  --panel: #0b1329;
+  --wall: #1e293b;
+  --cyan: #00f0ff;
+  --magenta: #ff007f;
+  --green: #10b981;
+  --yellow: #facc15;
+  --text: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 30%, #111827 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+h1 {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(16px, 3vw, 26px);
+  font-weight: 900;
+  background: linear-gradient(90deg, var(--yellow) 20%, var(--green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.hud {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.hud input[type=number] {
+  width: 65px;
+  background: var(--bg);
+  border: 1px solid var(--cyan);
+  color: #fff;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.controls-top {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+button {
+  font-family: 'Orbitron', sans-serif;
+  border: 1px solid var(--cyan);
+  background: var(--panel);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+button.audio-btn {
+  border-color: var(--magenta);
+  color: var(--magenta);
+}
+
+button.audio-btn.active {
+  background: var(--magenta);
+  color: #fff;
+  box-shadow: 0 0 12px var(--magenta);
+}
+
+#viewport {
+  max-width: 95vw;
+  max-height: 65vh;
+  overflow: auto;
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  border-radius: 8px;
+  background: #020617;
+  padding: 4px;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+}
+
+#game-container {
+  display: grid;
+  gap: 1px;
+}
+
+.cell {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  position: relative;
+  font-size: 18px;
+}
+
+/* Visual Cyberpunk */
+.wall { 
+  background: #1e293b; 
+  border: 1px solid #334155;
+  box-shadow: inset 0 0 5px #000;
+}
+.floor { background: #050b14; }
+.target { background: #050b14; }
+.target::after {
+  content: "✖";
+  color: var(--yellow);
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 0 8px var(--yellow);
+}
+
+.box {
+  background: #854d0e;
+  border: 2px solid var(--yellow);
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.3);
+}
+.box::before { content: "📦"; font-size: 18px; }
+
+.box-ok {
+  background: #065f46;
+  border: 2px solid var(--green);
+  box-shadow: 0 0 10px var(--green);
+}
+.box-ok::before { content: "⚡"; font-size: 18px; }
+
+.player {
+  background: #050b14;
+}
+
+/* Personagem Pixel Art: Homem de Camisa Amarela e Calça Verde */
+.player::before {
+  content: "";
+  width: 24px;
+  height: 28px;
+  display: block;
+  background: 
+    /* Cabelo Castanho */
+    linear-gradient(#6b3e2e, #6b3e2e) 6px 0px / 12px 6px,
+    /* Rosto/Pele */
+    linear-gradient(#fca5a5, #fca5a5) 6px 6px / 12px 6px,
+    /* Olhos */
+    linear-gradient(#000, #000) 8px 8px / 2px 2px,
+    linear-gradient(#000, #000) 14px 8px / 2px 2px,
+    /* Camisa Amarela */
+    linear-gradient(#eab308, #eab308) 4px 12px / 16px 8px,
+    /* Mãos */
+    linear-gradient(#fca5a5, #fca5a5) 2px 14px / 2px 4px,
+    linear-gradient(#fca5a5, #fca5a5) 20px 14px / 2px 4px,
+    /* Calça Verde */
+    linear-gradient(#22c55e, #22c55e) 6px 20px / 12px 8px,
+    /* Separação das pernas */
+    linear-gradient(#050b14, #050b14) 11px 24px / 2px 4px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 4px var(--cyan));
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 46px);
+  grid-template-rows: repeat(3, 46px);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dpad button {
+  width: 46px;
+  height: 46px;
+  font-size: 16px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SOKOBAN</h1>
+  <h1>Marcelo Bittencourt</h1>
+</header>
+
+<div class="hud">
+  <span>FASE: <input type="number" id="level-input" min="1" max="1000" value="1"> / 1000</span>
+  <span>PASSOS: <b id="steps-display" style="color:var(--cyan)">0</b></span>
+</div>
+
+<div class="controls-top">
+  <button id="audio-toggle-btn" class="audio-btn">🔊 MUSIC: OFF</button>
+  <button id="prev-btn">◄ Voltar</button>
+  <button id="restart-btn">🔄 Reiniciar</button>
+  <button id="undo-btn">↩ Desfazer</button>
+  <button id="next-btn">Avançar ►</button>
+</div>
+
+<div id="viewport">
+  <div id="game-container"></div>
+</div>
+
+<div class="dpad">
+  <div></div>
+  <button onclick="move(0, -1)">▲</button>
+  <div></div>
+  <button onclick="move(-1, 0)">◄</button>
+  <button onclick="move(0, 1)">▼</button>
+  <button onclick="move(1, 0)">►</button>
+</div>
+
+<script>
+// --- MOTOR SINTETIZADOR 16-BIT CHIPTUNE (WEB AUDIO API) ---
+let audioCtx = null;
+let isAudioPlaying = false;
+let musicInterval = null;
+let stepCounter = 0;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+// Bumbo Retro 16-Bit
+function playKick(time) {
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.frequency.setValueAtTime(150, time);
+  osc.frequency.exponentialRampToValueAtTime(30, time + 0.1);
+
+  gain.gain.setValueAtTime(0.4, time);
+  gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+
+  osc.start(time);
+  osc.stop(time + 0.1);
+}
+
+// Hi-Hat Retro
+function playHiHat(time) {
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1200, time);
+  
+  gain.gain.setValueAtTime(0.05, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(time);
+  osc.stop(time + 0.04);
+}
+
+// Nota do Sintetizador 16-bit (Onda Quadrada)
+function playTone(time, freq, duration, waveType = 'square', volume = 0.15) {
+  if (!freq) return;
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+
+  osc.type = waveType;
+  osc.frequency.setValueAtTime(freq, time);
+
+  gain.gain.setValueAtTime(volume, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(time);
+  osc.stop(time + duration);
+}
+
+function playSFX(type) {
+  if (!audioCtx) return;
+  let now = audioCtx.currentTime;
+
+  if (type === 'move') {
+    playTone(now, 220, 0.05, 'square', 0.1);
+  } else if (type === 'push') {
+    playTone(now, 110, 0.08, 'sawtooth', 0.2);
+  } else if (type === 'win') {
+    const notes = [261.63, 329.63, 392.00, 523.25]; // Arpejo C - E - G - C
+    notes.forEach((freq, idx) => {
+      playTone(now + idx * 0.08, freq, 0.1, 'square', 0.2);
+    });
+  }
+}
+
+function toggle16BitMusic() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  isAudioPlaying = !isAudioPlaying;
+  const btn = document.getElementById("audio-toggle-btn");
+
+  if (isAudioPlaying) {
+    btn.textContent = "🔊 MUSIC: ON";
+    btn.classList.add("active");
+    
+    // Tempo e Melodia estilo Chiptune 16-Bit
+    const tempo = 60 / 140 / 4; 
+    
+    // Frequências das notas (C4, D4, E4, F4, G4, A4, B4, C5)
+    const C3 = 130.81, E3 = 164.81, G3 = 196.00, A3 = 220.00, B3 = 246.94;
+    const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00, A4 = 440.00, B4 = 493.88, C5 = 523.25;
+
+    const leadNotes = [
+      E4, 0, G4, E4, D4, 0, C4, 0,  E4, 0, G4, A4, G4, 0, 0, 0,
+      E4, 0, G4, E4, D4, 0, C4, 0,  B3, C4, D4, E4, C4, 0, 0, 0
+    ];
+
+    const bassNotes = [
+      C3, C3, G3, C3, F3 = 174.61, F3, C3, F3,  C3, C3, G3, C3, G3, G3, D3 = 146.83, G3,
+      C3, C3, G3, C3, F3, F3, C3, F3,  G3, G3, G3, G3, C3, C3, C3, C3
+    ];
+
+    musicInterval = setInterval(() => {
+      let now = audioCtx.currentTime;
+      let step = stepCounter % 32;
+
+      // Percussão 16-bit
+      if (step % 4 === 0) playKick(now);
+      if (step % 2 !== 0) playHiHat(now);
+
+      // Linha Principal (Melodia Lead)
+      if (leadNotes[step]) {
+        playTone(now, leadNotes[step], 0.12, 'square', 0.12);
+      }
+
+      // Linha de Baixo (Bassline Chiptune)
+      if (step % 2 === 0) {
+        playTone(now, bassNotes[step], 0.15, 'triangle', 0.25);
+      }
+
+      stepCounter++;
+    }, tempo * 1000);
+  } else {
+    btn.textContent = "🔊 MUSIC: OFF";
+    btn.classList.remove("active");
+    clearInterval(musicInterval);
+  }
+}
+
+// --- LÓGICA DO SOKOBAN (1000 FASES) ---
+const TILE = { FLOOR: 0, WALL: 1, TARGET: 2, BOX: 3 };
+
+let currentLevelIndex = 1;
+let grid = [];
+let playerPos = { x: 0, y: 0 };
+let targets = [];
+let history = [];
+let steps = 0;
+
+function seededRandom(seed) {
+  let x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+function generateLevel(levelNum) {
+  let seed = levelNum * 9973;
+  const rand = () => seededRandom(seed++);
+
+  const cols = Math.min(8 + Math.floor(levelNum / 100), 16);
+  const rows = Math.min(8 + Math.floor(levelNum / 100), 16);
+  const numBoxes = Math.min(2 + Math.floor(levelNum / 60), 7);
+
+  let map = Array.from({ length: rows }, () => Array(cols).fill(TILE.WALL));
+
+  for (let r = 1; r < rows - 1; r++) {
+    for (let c = 1; c < cols - 1; c++) {
+      if (rand() > 0.18 || (r === 1 || r === rows-2 || c === 1 || c === cols-2)) {
+        map[r][c] = TILE.FLOOR;
+      }
+    }
+  }
+
+  let validFloors = [];
+  for (let r = 2; r < rows - 2; r++) {
+    for (let c = 2; c < cols - 2; c++) {
+      if (map[r][c] === TILE.FLOOR) validFloors.push({ x: c, y: r });
+    }
+  }
+
+  validFloors.sort(() => rand() - 0.5);
+
+  let boxPositions = [];
+  let levelTargets = [];
+  for (let i = 0; i < numBoxes && i < validFloors.length; i++) {
+    boxPositions.push({ ...validFloors[i] });
+    levelTargets.push({ ...validFloors[i] });
+  }
+
+  let pPos = { x: boxPositions[0].x + 1, y: boxPositions[0].y };
+  if (map[pPos.y][pPos.x] === TILE.WALL) pPos = { x: 1, y: 1 };
+
+  const moves = [{x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}];
+  const shuffleSteps = 40 + levelNum * 2;
+
+  for (let i = 0; i < shuffleSteps; i++) {
+    let dir = moves[Math.floor(rand() * 4)];
+    let boxIdx = Math.floor(rand() * boxPositions.length);
+    let b = boxPositions[boxIdx];
+
+    let pullPlayerTarget = { x: b.x + dir.x, y: b.y + dir.y };
+    let pullBoxTarget = { x: b.x + dir.x * 2, y: b.y + dir.y * 2 };
+
+    if (
+      pullPlayerTarget.x > 0 && pullPlayerTarget.x < cols - 1 &&
+      pullPlayerTarget.y > 0 && pullPlayerTarget.y < rows - 1 &&
+      pullBoxTarget.x > 0 && pullBoxTarget.x < cols - 1 &&
+      pullBoxTarget.y > 0 && pullBoxTarget.y < rows - 1 &&
+      map[pullPlayerTarget.y][pullPlayerTarget.x] === TILE.FLOOR &&
+      map[pullBoxTarget.y][pullBoxTarget.x] === TILE.FLOOR &&
+      !boxPositions.some(other => other.x === pullBoxTarget.x && other.y === pullBoxTarget.y)
+    ) {
+      b.x = pullPlayerTarget.x;
+      b.y = pullPlayerTarget.y;
+      pPos = { x: pullBoxTarget.x, y: pullBoxTarget.y };
+    }
+  }
+
+  boxPositions.forEach(b => { map[b.y][b.x] = TILE.BOX; });
+
+  return { map, playerPos: pPos, targets: levelTargets };
+}
+
+function loadLevel(levelNum) {
+  if (levelNum < 1) levelNum = 1;
+  if (levelNum > 1000) levelNum = 1000;
+
+  currentLevelIndex = levelNum;
+  document.getElementById("level-input").value = levelNum;
+
+  const levelData = generateLevel(levelNum);
+  grid = levelData.map;
+  playerPos = levelData.playerPos;
+  targets = levelData.targets;
+  history = [];
+  steps = 0;
+
+  render();
+}
+
+function render() {
+  const container = document.getElementById("game-container");
+  container.innerHTML = "";
+  
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  container.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
+  container.style.gridTemplateRows = `repeat(${rows}, 36px)`;
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const isTarget = targets.some(t => t.x === x && t.y === y);
+      const isPlayer = playerPos.x === x && playerPos.y === y;
+      const tileVal = grid[y][x];
+
+      if (tileVal === TILE.WALL) {
+        cell.classList.add("wall");
+      } else if (tileVal === TILE.BOX) {
+        cell.classList.add(isTarget ? "box-ok" : "box");
+      } else if (isPlayer) {
+        cell.classList.add("player");
+      } else if (isTarget) {
+        cell.classList.add("target");
+      } else {
+        cell.classList.add("floor");
+      }
+
+      container.appendChild(cell);
+    }
+  }
+
+  document.getElementById("steps-display").textContent = steps;
+}
+
+function move(dx, dy) {
+  const newX = playerPos.x + dx;
+  const newY = playerPos.y + dy;
+
+  if (grid[newY][newX] === TILE.WALL) return;
+
+  if (grid[newY][newX] === TILE.BOX) {
+    const boxNewX = newX + dx;
+    const boxNewY = newY + dy;
+
+    if (grid[boxNewY][boxNewX] === TILE.WALL || grid[boxNewY][boxNewX] === TILE.BOX) return;
+
+    saveHistory();
+
+    grid[newY][newX] = TILE.FLOOR;
+    grid[boxNewY][boxNewX] = TILE.BOX;
+    playerPos = { x: newX, y: newY };
+    steps++;
+    playSFX('push');
+  } else {
+    saveHistory();
+    playerPos = { x: newX, y: newY };
+    steps++;
+    playSFX('move');
+  }
+
+  render();
+  checkWin();
+}
+
+function saveHistory() {
+  history.push({
+    grid: JSON.parse(JSON.stringify(grid)),
+    playerPos: { ...playerPos },
+    steps
+  });
+}
+
+function undo() {
+  if (history.length === 0) return;
+  const lastState = history.pop();
+  grid = lastState.grid;
+  playerPos = lastState.playerPos;
+  steps = lastState.steps;
+  render();
+}
+
+function checkWin() {
+  if (targets.length === 0) return;
+  const allTargetsCovered = targets.every(t => grid[t.y][t.x] === TILE.BOX);
+  
+  if (allTargetsCovered) {
+    playSFX('win');
+    setTimeout(() => {
+      alert(`⚡ FASE ${currentLevelIndex} CONCLUÍDA!`);
+      loadLevel(currentLevelIndex + 1);
+    }, 150);
+  }
+}
+
+// Teclado
+window.addEventListener("keydown", (e) => {
+  switch (e.key) {
+    case "ArrowUp": case "w": case "W": move(0, -1); break;
+    case "ArrowDown": case "s": case "S": move(0, 1); break;
+    case "ArrowLeft": case "a": case "A": move(-1, 0); break;
+    case "ArrowRight": case "d": case "D": move(1, 0); break;
+    case "r": case "R": loadLevel(currentLevelIndex); break;
+    case "z": case "Z": undo(); break;
+  }
+});
+
+// Eventos Globais
+document.getElementById("audio-toggle-btn").onclick = toggle16BitMusic;
+document.getElementById("restart-btn").onclick = () => loadLevel(currentLevelIndex);
+document.getElementById("undo-btn").onclick = undo;
+document.getElementById("prev-btn").onclick = () => loadLevel(currentLevelIndex - 1);
+document.getElementById("next-btn").onclick = () => loadLevel(currentLevelIndex + 1);
+document.getElementById("level-input").onchange = (e) => loadLevel(parseInt(e.target.value) || 1);
+
+// Inicializar Fase 1
+loadLevel(1);
+</script>
+</body>
+</html>
