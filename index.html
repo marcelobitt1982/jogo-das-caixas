@@ -68,7 +68,7 @@ h1 {
 }
 
 .hud input[type=number] {
-  width: 65px;
+  width: 75px;
   background: var(--bg);
   border: 1px solid var(--cyan);
   color: #fff;
@@ -233,7 +233,7 @@ button.audio-btn.active {
 </header>
 
 <div class="hud">
-  <span>FASE: <input type="number" id="level-input" min="1" max="1000" value="1"> / 1000</span>
+  <span>FASE: <input type="number" id="level-input" min="1" max="10000" value="1"> / 10000</span>
   <span>PASSOS: <b id="steps-display" style="color:var(--cyan)">0</b></span>
 </div>
 
@@ -396,7 +396,7 @@ function toggle16BitMusic() {
   }
 }
 
-// --- LÓGICA DO SOKOBAN (1000 FASES) ---
+// --- LÓGICA DO SOKOBAN (10000 FASES) ---
 const TILE = { FLOOR: 0, WALL: 1, TARGET: 2, BOX: 3 };
 
 let currentLevelIndex = 1;
@@ -481,7 +481,7 @@ function generateLevel(levelNum) {
 
 function loadLevel(levelNum) {
   if (levelNum < 1) levelNum = 1;
-  if (levelNum > 1000) levelNum = 1000;
+  if (levelNum > 10000) levelNum = 10000;
 
   currentLevelIndex = levelNum;
   document.getElementById("level-input").value = levelNum;
